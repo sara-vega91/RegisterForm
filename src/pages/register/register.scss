@@ -1,9 +1,124 @@
-button {
-    font: 30px 'Arial', sans-serif;
-    color: black;
+/* === ESTILOS GENERALES === */
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px;
+}
 
-    background-color: red;
-    margin: 10px;
-    padding: 20px;
-    border-radius: 100%;
+/* === CONTENEDOR DEL FORMULARIO === */
+form {
+    background-color: #ffffff;
+    padding: 25px 35px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 400px;
+}
+
+/* === TITULO === */
+h1 {
+    text-align: center;
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 20px;
+    background-color: #e6e6e6;
+    padding: 8px;
+    border-radius: 5px;
+}
+
+/* === ETIQUETAS Y CAMPOS === */
+label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+    color: #444;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+/* === SECCIÓN DE OPCIONES === */
+fieldset {
+    border: none;
+    margin: 10px 0;
+    padding: 0;
+}
+
+legend {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+/* === BOTÓN === */
+button {
+    display: block;
+    margin: 20px auto 0;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #fff;
+    background-color: #4a90e2;
+    /* Azul suave */
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Al pasar el ratón */
+button:hover {
+    background-color: #357abd;
+    /* Azul un poco más oscuro */
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Al hacer clic */
+button:active {
+    background-color: #2d5f91;
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* Si el botón está deshabilitado */
+button:disabled {
+    background-color: #ccc;
+    color: #666;
+    cursor: not-allowed;
+}
+
+/* === INPUT FILE === */
+input[type="file"] {
+    margin-top: 5px;
+}
+
+/* === CHECKBOX DE TÉRMINOS === */
+.terms {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.form-error {
+    background-color: #e73838;
+    color: rgb(0, 0, 0);
+    font-size: 13px;
+    margin-top: 5px;
 }

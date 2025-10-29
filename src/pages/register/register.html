@@ -20,6 +20,9 @@
     <div>
         <label for="lastName">Apellidos: </label>
         <input formControlName="lastName" type="text" id="lastName" name="lastName">
+        @if (registerForm.get('lastName')?.invalid && registerForm.get('lastName')?.touched) {
+        <p class="form-error">El apellido es requerido.</p>
+        }
     </div>
 
     <div>
@@ -46,6 +49,9 @@
     <div>
         <label for="age">Edad:</label>
         <input formControlName="age" type="number" id="age" name="age">
+        @if (registerForm.get('age')?.hasError('min')) {
+        <p class="form-error">Debes ser mayor de 18 años.</p>
+        }
     </div>
 
     <div>
@@ -88,11 +94,15 @@
             value="java">Java
         <input type="checkbox" formControlName="FavouriteLanguajes" id="FavouriteLanguajes" name="FavouriteLanguajes"
             value="otros">Otros
+        @if(registerForm.get('FavouriteLanguajes')?.invalid && registerForm.get('FavouriteLanguajes')?.touched) {
+        <p class="form-error">Selecciona al menos un lenguaje.</p>
+        }
     </div>
 
     <div>
         <label for="profileImg">Foto de perfil:</label>
-        <input formControlName="profileImg" type="file" id="profileImg" name="profileImg" alt="profileImg">
+        <input type="file" id="profileImg" name="profileImg" alt="profileImg" (change)="onFileChange($event)">
+        <p>{{ registerForm.get('profileImg')?.value?.name || 'No hay archivo seleccionado' }} </p>
     </div>
 
     <div>

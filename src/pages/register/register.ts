@@ -21,16 +21,16 @@ export class Register implements OnInit {
       lastName: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: ['', [Validators.required, Validators.minLength(6)]],
-      age: ['', [Validators.min(18)]],
-      birthDate: ['', [Validators.required]], //falta VALIDADOR ADICIONAL
+      confirmPassword: ['', [Validators.required, Validators.minLength(6), this.validateSamePassword()]],
+      age: [''],
+      birthDate: ['', [Validators.required]],
       gender: ['', [Validators.required]],
       country: ['', [Validators.required]],
-      FavouriteLanguajes: [''], //MINIMO 1 SELECCIONADO
-      profileImg: [''], //OPCIONAL PERO MOSTRAR NOMBRE DEL ARCHIVO
-      acceptTerms: [false, [Validators.requiredTrue]],
+      FavouriteLanguajes: ['', { validators: [this.validateAtLeastOneLanguage()] }],
+      profileImg: [null], //OPCIONAL PERO MOSTRAR NOMBRE DEL ARCHIVO
+      acceptTerms: [true, [Validators.requiredTrue]],
     }, {
-      validators: [this.validateSamePassword(), this.adultValidator(18)],
+      validators: [this.validateSamePassword(), this.adultValidator(), this.validateAtLeastOneLanguage()],
     });
 
 
@@ -62,24 +62,77 @@ export class Register implements OnInit {
   }
 
   //Función para validar que la fecha de nacimiento sea una fecha válida y que el usuario tenga al menos 18 años
-  // Validador personalizado
-  adultValidator(minAge: number): ValidatorFn | null {
+  adultValidator(): ValidatorFn | null {
     return (control: AbstractControl): ValidationErrors | null => {
-      console.log(control.value);
-      //obtener la fecha de nacimiento del formulario
-      const birthDate = new Date(control.value);
-      if (!control.value) return null;
+      const minAge = 18;
 
-      //Calculamos la edad retandola a la fecha actual
+
+      //De todo el formulario, obtener age y birthDate
+      let age = control.get('age')?.value;
+      const birthDate = control.get('birthDate')?.value;
+
+      // Si no hay birthDate o age, no hacer nada
+      if (!birthDate || !age) return null;
+
+      // Formatear la fecha de nacimiento
       const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear(); //año
-      const monthDff = today.getMonth() - birthDate.getMonth(); //mes
-      if (monthDff < 0 || (monthDff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
+      const birthDateFormated = new Date(birthDate);
+
+      //Hacemos el cálculo de la edad
+      let yearDiff = today.getFullYear() - birthDateFormated.getFullYear();
+      const monthDiff = today.getMonth() - birthDateFormated.getMonth();
+      const dayDiff = today.getDate() - birthDateFormated.getDate();
+
+      let calculatedAge = yearDiff;
+      if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+        calculatedAge--;
       }
 
-      //Devolver el error si es demasiado joven 
-      return age >= minAge ? null : { tooYoung: true };
+      //Comparar la edad calculada con la edad introducida
+      if (calculatedAge >= minAge) {
+        control.get('age')?.setErrors(null);
+        control.get('birthDate')?.setErrors(null);
+        return null;
+      } else if (calculatedAge !== minAge) {
+        control.get('age')?.setErrors({ notSame: true });
+        control.get('birthDate')?.setErrors({ notSame: true });
+      } else {
+        control.get('age')?.setErrors({ tooYoung: true });
+        control.get('birthDate')?.setErrors({ tooYoung: true });
+        return { tooYoung: true };
+      }
+      return null;
+    }
+
+  }
+
+  //Función para validar que se elige al menos una opción en FavouriteLanguajes
+  validateAtLeastOneLanguage(): ValidatorFn | null {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+
+      //si es array, comprobar que al menos uno esté seleccionado
+      if (Array.isArray(value) && value.length > 0) {
+        return null;
+      }
+      //si no es array o está vacío, pero tiene algun valor, devolver null
+      if (!Array.isArray(value) && value) {
+        return null;
+      }
+      return { atLeastOne: true }; // Error si no hay nada seleccionado 
+    };
+  }
+
+  profileImgName: string = ''; //variable para mostrar el nombre
+
+  onFileChange(event: any): void {
+    const file = event.target.files[0]; // Obtener el archivo seleccionado
+    this.registerForm.get('profileImg')?.setValue(file || null);
+
+    if (file) {
+      this.registerForm.get('profileImg')?.setValue(file); // Actualizar el valor del formulario
+    } else {
+      this.registerForm.get('profileImg')?.setValue(null); // Si no hay archivo, limpiar el valor
     }
   }
 

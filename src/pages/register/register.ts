@@ -1,19 +1,38 @@
+import { JsonPipe } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import e from 'express';
+import { ErrorsComponent } from '../../app/components/errors-component/errors-component';
+
+
+
 
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, JsonPipe, ErrorsComponent],
   templateUrl: './register.html',
   styleUrls: ['./register.scss'],
 })
+
+
+
+
+
 export class Register implements OnInit {
 
   private fb: FormBuilder = inject(FormBuilder);
   registerForm!: FormGroup;
+  profileImgName: string = ''; //variable para mostrar el nombre
+
+  errorMesages: { [key: string]: string } = {
+    email: "error en el email",
+    username: "debe contener mínimo 2 caracteres",
+    password: "Debe contener mínimo 6 caracteres",
+    confirmPassword: "debe coincidir con la contraseña",
+    tooYoung: "debe tener mínimo 18 años",
+    notSame: "la fecha de nacimiento debe coincidir con la edad introducida"
+  };
 
   ngOnInit(): void {
     this.registerForm = this.fb.group({
@@ -21,8 +40,8 @@ export class Register implements OnInit {
       lastName: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: ['', [Validators.required, Validators.minLength(6), this.validateSamePassword()]],
-      age: [''],
+      confirmPassword: ['', [Validators.required]],
+      age: ['', Validators.min(18)],
       birthDate: ['', [Validators.required]],
       gender: ['', [Validators.required]],
       country: ['', [Validators.required]],
@@ -30,12 +49,16 @@ export class Register implements OnInit {
       profileImg: [null], //OPCIONAL PERO MOSTRAR NOMBRE DEL ARCHIVO
       acceptTerms: [true, [Validators.requiredTrue]],
     }, {
-      validators: [this.validateSamePassword(), this.adultValidator(), this.validateAtLeastOneLanguage()],
+      validators: [
+        this.validateSamePassword(),
+        this.adultValidator(),
+        this.validateAtLeastOneLanguage()
+      ],
     });
 
 
     // Escuchar cambios en el formulario
-    //Cada vez que cambie cualquier campo del formulario, 
+    // Cada vez que cambie cualquier campo del formulario, 
     // imprime si el formulario completo es válido.
     // Esto es útil para habilitar/deshabilitar el botón de envío en tiempo real.
     this.registerForm.valueChanges.subscribe(value => {
@@ -46,29 +69,23 @@ export class Register implements OnInit {
 
 
   // Función validadora personalizada para verificar que las contraseñas coincidan
-  validateSamePassword(): ValidatorFn | null {
+  private validateSamePassword(): ValidatorFn | null {
     return (control: AbstractControl): ValidationErrors | null => {
       const isSameValue = control.get('confirmPassword')?.value === control.get('password')?.value;
-      if (isSameValue) {
-        control.get('confirmPassword')?.setErrors(null);
-        control.get('password')?.setErrors(null);
-        return null;
-      } else {
-        control.get('confirmPassword')?.setErrors({ notSame: true });
-        control.get('password')?.setErrors({ notSame: true });
-        return { notSame: true };
-      }
+
+      control.get('confirmPassword')?.setErrors(isSameValue ? null : { notSame: true });
+
+      return isSameValue ? null : { notSame: true };
     };
   }
 
   //Función para validar que la fecha de nacimiento sea una fecha válida y que el usuario tenga al menos 18 años
-  adultValidator(): ValidatorFn | null {
+  private adultValidator(): ValidatorFn | null {
     return (control: AbstractControl): ValidationErrors | null => {
       const minAge = 18;
 
-
       //De todo el formulario, obtener age y birthDate
-      let age = control.get('age')?.value;
+      const age = control.get('age')?.value;
       const birthDate = control.get('birthDate')?.value;
 
       // Si no hay birthDate o age, no hacer nada
@@ -79,7 +96,7 @@ export class Register implements OnInit {
       const birthDateFormated = new Date(birthDate);
 
       //Hacemos el cálculo de la edad
-      let yearDiff = today.getFullYear() - birthDateFormated.getFullYear();
+      const yearDiff = today.getFullYear() - birthDateFormated.getFullYear();
       const monthDiff = today.getMonth() - birthDateFormated.getMonth();
       const dayDiff = today.getDate() - birthDateFormated.getDate();
 
@@ -89,25 +106,24 @@ export class Register implements OnInit {
       }
 
       //Comparar la edad calculada con la edad introducida
-      if (calculatedAge >= minAge) {
-        control.get('age')?.setErrors(null);
-        control.get('birthDate')?.setErrors(null);
-        return null;
-      } else if (calculatedAge !== minAge) {
-        control.get('age')?.setErrors({ notSame: true });
-        control.get('birthDate')?.setErrors({ notSame: true });
-      } else {
-        control.get('age')?.setErrors({ tooYoung: true });
-        control.get('birthDate')?.setErrors({ tooYoung: true });
-        return { tooYoung: true };
-      }
-      return null;
-    }
+      let errorToReturn;
 
+      if (calculatedAge >= minAge) {
+        errorToReturn = null;
+      } else if (calculatedAge !== minAge) {
+        errorToReturn = { notSame: true };
+      } else {
+        errorToReturn = { tooYoung: true };
+      }
+      control.get('age')?.setErrors(errorToReturn);
+      control.get('birthDate')?.setErrors(errorToReturn);
+      return errorToReturn;
+
+    }
   }
 
   //Función para validar que se elige al menos una opción en FavouriteLanguajes
-  validateAtLeastOneLanguage(): ValidatorFn | null {
+  private validateAtLeastOneLanguage(): ValidatorFn | null {
     return (control: AbstractControl): ValidationErrors | null => {
       const value = control.value;
 
@@ -123,9 +139,7 @@ export class Register implements OnInit {
     };
   }
 
-  profileImgName: string = ''; //variable para mostrar el nombre
-
-  onFileChange(event: any): void {
+  public onFileChange(event: any): void {
     const file = event.target.files[0]; // Obtener el archivo seleccionado
     this.registerForm.get('profileImg')?.setValue(file || null);
 
@@ -136,9 +150,28 @@ export class Register implements OnInit {
     }
   }
 
-  handleSubmit(): void {
+  public handleSubmit(): void {
     console.log(this.registerForm.value);
     this.registerForm.reset();
+  }
+
+  public getMessages(field: string): { hasError: boolean, errors: string[] } | null {
+    console.log('field:', field);
+    const fieldForm = this.registerForm.get(field);
+    if (fieldForm?.errors && fieldForm.touched) {
+      console.log(fieldForm?.errors);
+      const errorKeys = Object.keys(fieldForm.errors);
+      const errorMessages: string[] = [];
+      errorKeys.forEach((e: string) => {
+        const message = this.errorMesages[e];
+        if (message) {
+          errorMessages.push(message)
+        }
+      });
+      return { hasError: true, errors: errorMessages };
+    } else {
+      return null;
+    }
   }
 
 }
